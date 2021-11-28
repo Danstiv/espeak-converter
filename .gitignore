@@ -1,0 +1,5 @@
+__pycache__/
+books/*
+lib/eSpeak
+log.log
+constants.py
