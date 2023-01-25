@@ -1,4 +1,4 @@
-import cgi
+from email.message import EmailMessage
 import glob
 import logging
 import os
@@ -43,7 +43,11 @@ def convert_book(url):
 			continue
 		break
 	content = r.content
-	filename = cgi.parse_header(r.headers.get('content-disposition', ''))[1].get('filename', '')
+	filename = None
+	if 'Content-Disposition' in r.headers:
+		message = EmailMessage()
+		message['Content-Disposition'] = r.headers['Content-Disposition']
+		filename = message['Content-Disposition'].params['filename']
 	if not filename:
 		filename = os.path.split(url)[-1]
 	if '/' in filename or '..' in filename or len(filename.encode())>255:
