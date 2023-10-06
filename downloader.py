@@ -10,7 +10,12 @@ app = quart.Quart(__name__)
 @app.route('/', methods=['POST'])
 async def download():
     data =await quart.request.json
-    client = httpx.AsyncClient(proxies=PROXY, timeout=300)
+    client = httpx.AsyncClient(
+        proxies=PROXY,
+        timeout=300,
+        follow_redirects=True,
+        verify=False,
+    )
     try:
         response = await client.get(data['url'], headers=data['headers'])
         await client.aclose()
@@ -21,4 +26,5 @@ async def download():
     return quart.Response(response.content, status=response.status_code, headers=dict(response.headers))
 
 
-app.run(host='0.0.0.0', port=10011)
+if __name__ == '__main__':
+    app.run(host='localhost', port=10011)
