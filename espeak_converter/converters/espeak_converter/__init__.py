@@ -38,7 +38,6 @@ class EspeakConverter:
         processed_chunks = {}
         mp3_file = mp3_file_path.open("wb")
         [await w.start() for w in espeak_workers]
-        max_buffered = 0
         while processed_chunks_count < total_chunks:
             id, chunk = await espeak_output_queue.get()
             processed_chunks_count += 1
@@ -46,9 +45,6 @@ class EspeakConverter:
             while next_chunk_id in processed_chunks:
                 mp3_file.write(processed_chunks.pop(next_chunk_id))
                 next_chunk_id += 1
-            if len(processed_chunks) > max_buffered:
-                max_buffered = len(processed_chunks)
-                print(max_buffered)
         mp3_file.close()
         [await w.wait_for_finish() for w in espeak_workers]
         logger.info(f"Книга {mp3_file_path.name} преобразована")
