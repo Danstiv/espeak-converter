@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#lib/
 lib64/
 parts/
 sdist/
@@ -162,6 +162,6 @@ cython_debug/
 # Other project ignores
 books/*
 tmp/*
-lib/eSpeak
+lib/espeak/espeak-ng-data
 log.log
 config.json
