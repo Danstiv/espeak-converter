@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-VERSION = "0.13"
+VERSION = "0.13.1"
 
 if getattr(sys, "frozen", False):
     _app_file = sys.executable
