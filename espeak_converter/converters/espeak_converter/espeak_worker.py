@@ -1,12 +1,19 @@
 import asyncio
 import logging
 
+from espeak_converter.async_tasks_handler import async_tasks_handler
+from espeak_converter.config import config
 from espeak_converter.constants import ESPEAK_DIR, LAME_PATH
 from espeak_converter.converters.espeak_converter.constants import (
     ESPEAK_READ_CHUNK_SIZE,
 )
+from espeak_converter.utils.rescaler import Rescaler
 
 logger = logging.getLogger(__name__)
+
+default_espeak_rate_rescaler = Rescaler((0, 100), (80, 450), round_result=True)
+# Based on the NVDA espeak-ng driver feature.
+rate_boost_espeak_rate_rescaler = Rescaler((0, 100), (240, 1350), round_result=True)
 
 
 class EspeakWorker:
@@ -18,7 +25,7 @@ class EspeakWorker:
     async def start(self):
         if self._task is not None:
             raise RuntimeError("Worker is already started")
-        self._task = asyncio.create_task(self.run())
+        self._task = async_tasks_handler.add_task(self.run())
 
     async def wait_for_finish(self):
         if self._task is None:
@@ -33,6 +40,17 @@ class EspeakWorker:
             await self.output_queue.put((id, wav))
 
     async def convert_text(self, text):
+        rate_rescaler = (
+            rate_boost_espeak_rate_rescaler
+            if config.espeak.rate_boost
+            else default_espeak_rate_rescaler
+        )
+        rate = rate_rescaler(config.espeak.rate)
+        voice = (
+            "ru-cl"
+            if config.espeak.variant is None
+            else "ru-cl+" + config.espeak.variant
+        )
         espeak = await asyncio.create_subprocess_exec(
             ESPEAK_DIR / "espeak-ng.exe",
             f"--path={ESPEAK_DIR}",
@@ -40,11 +58,9 @@ class EspeakWorker:
             "-b",
             "1",
             "-v",
-            "ru-cl",
-            # Without sonic the highest speed is achieved without glitches.
-            # https://github.com/espeak-ng/espeak-ng/issues/1461#issuecomment-1289315914
+            voice,
             "-s",
-            "475",
+            str(rate),
             "-z",
             "--stdout",
             stdin=asyncio.subprocess.PIPE,
@@ -73,12 +89,12 @@ class EspeakWorker:
             espeak.stdin.close()
             await espeak.stdin.wait_closed()
 
-        espeak_write_task = asyncio.create_task(espeak_write())
+        espeak_write_task = async_tasks_handler.add_task(espeak_write())
 
         async def lame_read():
             return await lame.stdout.read()
 
-        lame_read_task = asyncio.create_task(lame_read())
+        lame_read_task = async_tasks_handler.add_task(lame_read())
         await espeak.stdout.read(44)  # Drop wav header
         previous_wav_chunk = b""
         wav_chunk = b""

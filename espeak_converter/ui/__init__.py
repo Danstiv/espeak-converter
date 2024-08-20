@@ -3,6 +3,7 @@ import os
 import sys
 
 from espeak_converter.config import config
+from espeak_converter.converters.espeak_converter.utils import get_espeak_variants
 from espeak_converter.ui.utils import ainput, choice
 from espeak_converter.utils import request_utils
 
@@ -48,6 +49,13 @@ class UI:
             proxy = config.proxy or "не задан."
             options.append(f"Прокси: {proxy}")
             options.append(f"Число потоков: {config.max_jobs}.")
+            options.append(f"Скорость espeak: {config.espeak.rate}%.")
+            options.append(
+                f"Экстраускорение espeak: {"включено" if config.espeak.rate_boost else "выключено"}."
+            )
+            options.append(
+                f"Вариант espeak: {config.espeak.variant or 'Не установлен'}."
+            )
             options.append("Назад.")
             answer = await choice("Настройки", options)
             match answer:
@@ -56,6 +64,12 @@ class UI:
                 case 1:
                     await self.set_max_jobs()
                 case 2:
+                    await self.set_rate()
+                case 3:
+                    await self.set_rate_boost()
+                case 4:
+                    await self.set_espeak_variant()
+                case 5:
                     config.save()
                     return
 
@@ -95,3 +109,52 @@ class UI:
                 message = "Значение очень сильно превышает рекомендованное! Запуск преобразования может вызвать нестабильность системы!"
             print(message)
         config.max_jobs = answer
+
+    async def set_rate(self):
+        while True:
+            try:
+                answer = int(await ainput("Введите скорость espeak в процентах: "))
+            except ValueError:
+                continue
+            if not 0 <= answer <= 100:
+                print("Значение должно быть в диапазоне от 0 до 100.")
+                continue
+            break
+        config.espeak.rate = answer
+
+    async def set_rate_boost(self):
+        config.espeak.rate_boost = not config.espeak.rate_boost
+
+    async def set_espeak_variant(self):
+        variants = get_espeak_variants()
+        variants.insert(0, "Без варианта")
+        offset = 0
+        previous_page_option_index = None
+        next_page_option_index = None
+        while True:
+            previous_page_available = offset > 0
+            next_page_available = offset + 10 < len(variants)
+
+            choices = []
+            for variant in variants[offset : offset + 10]:
+                choices.append(variant + ".")
+            if previous_page_available:
+                choices.append("Назад.")
+                previous_page_option_index = len(choices) - 1
+            if next_page_available:
+                choices.append("Дальше.")
+                next_page_option_index = len(choices) - 1
+            choices.append("Вернуться в настройки.")
+            answer = await choice("Выберите вариант.", choices)
+            if answer == len(choices) - 1:
+                return
+            if previous_page_available and answer == previous_page_option_index:
+                offset -= 10
+            elif next_page_available and answer == next_page_option_index:
+                offset += 10
+            else:
+                selected_variant = variants[offset + answer]
+                if selected_variant == variants[0]:
+                    selected_variant = None
+                config.espeak.variant = selected_variant
+                return

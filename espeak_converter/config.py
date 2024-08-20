@@ -5,10 +5,17 @@ from pydantic import BaseModel
 from espeak_converter import constants
 
 
+class EspeakModel(BaseModel):
+    rate: int = 50
+    rate_boost: bool = False
+    variant: str | None = None
+
+
 class ConfigModel(BaseModel):
     max_jobs: int = 2
     urls: list[str] = []
     proxy: str | None = None
+    espeak: EspeakModel = EspeakModel()
 
 
 class Config:
