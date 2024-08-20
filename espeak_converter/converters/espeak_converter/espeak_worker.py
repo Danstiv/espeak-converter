@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from pathlib import Path
 
 from espeak_converter.async_tasks_handler import async_tasks_handler
 from espeak_converter.config import config
@@ -51,9 +52,10 @@ class EspeakWorker:
             if config.espeak.variant is None
             else "ru-cl+" + config.espeak.variant
         )
+        espeak_data_path = ESPEAK_DIR.relative_to(Path.cwd())
         espeak = await asyncio.create_subprocess_exec(
             ESPEAK_DIR / "espeak-ng.exe",
-            f"--path={ESPEAK_DIR}",
+            f"--path={espeak_data_path}",
             "--stdin",
             "-b",
             "1",
