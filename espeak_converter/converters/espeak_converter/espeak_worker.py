@@ -2,6 +2,9 @@ import asyncio
 import logging
 
 from espeak_converter.constants import ESPEAK_DIR, LAME_PATH
+from espeak_converter.converters.espeak_converter.constants import (
+    ESPEAK_READ_CHUNK_SIZE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +44,7 @@ class EspeakWorker:
             # Without sonic the highest speed is achieved without glitches.
             # https://github.com/espeak-ng/espeak-ng/issues/1461#issuecomment-1289315914
             "-s",
-            "777",
+            "475",
             "-z",
             "--stdout",
             stdin=asyncio.subprocess.PIPE,
@@ -50,6 +53,11 @@ class EspeakWorker:
         )
         lame = await asyncio.create_subprocess_exec(
             LAME_PATH,
+            "-r",
+            "-s",
+            "22050",
+            "-m",
+            "m",
             "-b",
             "96",
             "-",
@@ -71,23 +79,30 @@ class EspeakWorker:
             return await lame.stdout.read()
 
         lame_read_task = asyncio.create_task(lame_read())
+        await espeak.stdout.read(44)  # Drop wav header
         previous_wav_chunk = b""
-        while espeak.returncode is None:
-            wav_chunk = await espeak.stdout.read(65536)
-            if not wav_chunk:
+        wav_chunk = b""
+        start_zeros_stripped = False
+        while True:
+            chunk = await espeak.stdout.read(ESPEAK_READ_CHUNK_SIZE)
+            if not chunk:
+                # EOF
+                break
+            wav_chunk += chunk
+            if len(wav_chunk) < ESPEAK_READ_CHUNK_SIZE:
                 continue
             if previous_wav_chunk:
                 lame.stdin.write(previous_wav_chunk)
                 await lame.stdin.drain()
             else:
                 # Start of stream.
-                header = wav_chunk[:44]
-                stripped_wav_data = self.strip_zeros_from_pcm_chunk(
-                    wav_chunk[44:], left=True
-                )
-                wav_chunk = header + stripped_wav_data
+                wav_chunk = self.strip_zeros_from_pcm_chunk(wav_chunk, left=True)
+                start_zeros_stripped = True
             previous_wav_chunk = wav_chunk
-        previous_wav_chunk += await espeak.stdout.read()
+            wav_chunk = b""
+        if not start_zeros_stripped:
+            wav_chunk = self.strip_zeros_from_pcm_chunk(wav_chunk, left=True)
+        previous_wav_chunk += wav_chunk
         if previous_wav_chunk:
             previous_wav_chunk = self.strip_zeros_from_pcm_chunk(
                 previous_wav_chunk, right=True
