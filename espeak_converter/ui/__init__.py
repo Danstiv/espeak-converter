@@ -86,6 +86,7 @@ class UI:
         prompt = (
             "Максимальное число потоков.\n"
             f"Минимум 2, максимально рекомендовано {total_cpu}.\n"
+            "Число потоков должно быть чётным.\n"
             "Введите число потоков: "
         )
         while True:
@@ -95,6 +96,9 @@ class UI:
                 continue
             if answer < 2:
                 print("2 - минимальное значение")
+                continue
+            if answer % 2:
+                print("Число потоков должно быть чётным.")
                 continue
             break
         if answer > total_cpu:
