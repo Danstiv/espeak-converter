@@ -1,0 +1,18 @@
+[project]
+name = "espeak-converter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "chardet==5.2.0",
+    "fb2parser",
+    "httpx[socks]==0.27.0",
+    "lxml==5.3.0",
+    "pydantic==2.8.2",
+    "pyinstaller==6.10.0",
+    "rich-split==0.1.2",
+]
+
+[tool.uv.sources]
+fb2parser = { url = "https://github.com/Danstiv/fb2parser/archive/master.zip" }
