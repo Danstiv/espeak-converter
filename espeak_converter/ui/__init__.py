@@ -55,6 +55,9 @@ class UI:
             options.append(
                 f"Вариант espeak: {config.espeak.variant or 'Не установлен'}."
             )
+            options.append(
+                f"Исправление псевдотранслита: {'включено' if config.untranslit else 'выключено'}."
+            )
             options.append("Назад.")
             answer = await choice("Настройки", options)
             match answer:
@@ -69,6 +72,8 @@ class UI:
                 case 4:
                     await self.set_espeak_variant()
                 case 5:
+                    config.untranslit = not config.untranslit
+                case 6:
                     config.save()
                     return
 

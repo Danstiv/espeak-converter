@@ -7,6 +7,7 @@ from rich_split import TextSplitter
 from espeak_converter.config import config
 from espeak_converter.constants import BOOKS_PATH
 from espeak_converter.converters.espeak_converter.espeak_worker import EspeakWorker
+from espeak_converter.text_processors.untranslit import fix_pseudotranslit
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class EspeakConverter:
         text = self.read_txt_file()
         if not text:
             return
+        text = self.preprocess_text(text)
         next_chunk_id = 0
         total_chunks = 0
         for i, chunk in enumerate(self.text_splitter(text), start=next_chunk_id):
@@ -65,3 +67,8 @@ class EspeakConverter:
         if encoding == "MacCyrillic":
             encoding = "1251"
         return data.decode(encoding)
+
+    def preprocess_text(self, text: str):
+        if config.untranslit:
+            text = fix_pseudotranslit(text)
+        return text

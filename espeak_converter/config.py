@@ -16,6 +16,7 @@ class ConfigModel(BaseModel):
     urls: list[str] = []
     proxy: str | None = None
     espeak: EspeakModel = EspeakModel()
+    untranslit: bool = False
 
 
 class Config:
