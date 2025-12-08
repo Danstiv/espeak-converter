@@ -33,7 +33,10 @@ for k, v in list(PSEUDOTRANSLIT_TABLE.items()):
     PSEUDOTRANSLIT_TABLE[ord(k)] = v
 
 RUSSIAN_ALPHABET = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
-WORD_REGEX = re.compile(r"(^|(?<=\s)).+?($|(?=[\s,\.\?!\d]))", flags=re.MULTILINE)
+WORD_REGEX = re.compile(
+    r"(^|(?<=\s)).+?($|(?=[\s,\d])|(?=[\.\?!](\s|$)))",
+    flags=re.MULTILINE,
+)
 
 
 def fix_word(match):
