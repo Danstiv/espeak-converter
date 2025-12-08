@@ -1,1 +1,1 @@
-from .httpx import HTTPXRequestSender
+from .httpx import HTTPXRequestSender as HTTPXRequestSender

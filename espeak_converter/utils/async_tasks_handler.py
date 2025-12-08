@@ -2,11 +2,10 @@ import asyncio
 import logging
 import signal
 
-default_logger = logging.getLogger('async_tasks_handler_default_logger')
+default_logger = logging.getLogger("async_tasks_handler_default_logger")
 
 
 class AsyncTasksHandler:
-
     def initialize_async_tasks_handler(self, logger=None):
         self._logger = logger or default_logger
         self._async_tasks = set()
@@ -30,7 +29,9 @@ class AsyncTasksHandler:
         if task.cancelled():
             self._logger.debug(f'Task "{task_name}" cancelled')
         elif exception := task.exception():
-            self._logger.exception(f'Unhandeled exception in task "{task_name}":', exc_info=exception)
+            self._logger.exception(
+                f'Unhandeled exception in task "{task_name}":', exc_info=exception
+            )
         else:
             self._logger.debug(f'Task "{task_name}" finished')
         self._async_tasks.remove(task)
@@ -38,15 +39,17 @@ class AsyncTasksHandler:
             self._all_tasks_finished_event.set()
 
     async def stop_tasks(self):
-        self._logger.debug('Stopping tasks')
+        self._logger.debug("Stopping tasks")
         for task in self._async_tasks:
             task_name = task.get_name()
             if not task.cancellable:
-                self._logger.debug(f'Skipping task "{task_name}" because it is marked as uncancellable')
+                self._logger.debug(
+                    f'Skipping task "{task_name}" because it is marked as uncancellable'
+                )
                 continue
             self._logger.debug(f'Cancelling task "{task_name}"')
             task.cancel()
-        self._logger.debug('Waiting for tasks to complete')
+        self._logger.debug("Waiting for tasks to complete")
         await self.wait_for_tasks_completion()
 
     async def wait_for_tasks_completion(self):
@@ -54,17 +57,21 @@ class AsyncTasksHandler:
 
     def set_stop_signal_handler(self, stop_signal=signal.SIGINT):
         if self._previous_signal_handlers.get(stop_signal) is not None:
-            raise ValueError('Stop signal handler is already set for that signal')
+            raise ValueError("Stop signal handler is already set for that signal")
         try:
-            asyncio.get_running_loop().add_signal_handler(stop_signal, self._stop_signal_handler)
+            asyncio.get_running_loop().add_signal_handler(
+                stop_signal, self._stop_signal_handler
+            )
             self._previous_signal_handlers[stop_signal] = True
         except NotImplementedError:
-            self._previous_signal_handlers[stop_signal] = signal.signal(stop_signal, self._stop_signal_handler)
+            self._previous_signal_handlers[stop_signal] = signal.signal(
+                stop_signal, self._stop_signal_handler
+            )
 
     def unset_stop_signal_handler(self, stop_signal=signal.SIGINT):
         if self._previous_signal_handlers.get(stop_signal) is None:
-            raise ValueError('Stop signal handler is already unset for that signal')
-        if self._previous_signal_handlers[stop_signal] == True:
+            raise ValueError("Stop signal handler is already unset for that signal")
+        if self._previous_signal_handlers[stop_signal] is True:
             asyncio.get_running_loop().remove_signal_handler(stop_signal)
         else:
             signal.signal(stop_signal, self._previous_signal_handlers[stop_signal])
@@ -75,6 +82,6 @@ class AsyncTasksHandler:
 
     async def wait_for_stop_signal(self):
         if not self._previous_signal_handlers:
-            raise ValueError('Stop signal handler is not set')
+            raise ValueError("Stop signal handler is not set")
         await self._stop_signal_received_event.wait()
         self._stop_signal_received_event.clear()

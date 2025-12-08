@@ -124,7 +124,7 @@ class BaseRequest(ABC):
         if self.has_attempts:
             delay = self.next_attempt_delay
             message += (
-                f'\nNext attempt in {delay} {'second' if delay == 1 else 'seconds'}'
+                f"\nNext attempt in {delay} {'second' if delay == 1 else 'seconds'}"
             )
         await self.log_error(message)
 

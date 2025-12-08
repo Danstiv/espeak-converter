@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 from espeak_converter.config import config
 from espeak_converter.converters.espeak_converter.utils import get_espeak_variants
@@ -51,7 +50,7 @@ class UI:
             options.append(f"Число потоков: {config.max_jobs}.")
             options.append(f"Скорость espeak: {config.espeak.rate}%.")
             options.append(
-                f"Экстраускорение espeak: {"включено" if config.espeak.rate_boost else "выключено"}."
+                f"Экстраускорение espeak: {'включено' if config.espeak.rate_boost else 'выключено'}."
             )
             options.append(
                 f"Вариант espeak: {config.espeak.variant or 'Не установлен'}."

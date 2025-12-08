@@ -7,7 +7,6 @@ from espeak_converter.converters.flibusta_url_converter import (
     FlibustaURLConverter,
 )
 from espeak_converter.converters.path_converter import PathConverter
-from espeak_converter.utils import request_utils
 
 logger = logging.getLogger(__name__)
 
