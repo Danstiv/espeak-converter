@@ -34,7 +34,7 @@ for k, v in list(PSEUDOTRANSLIT_TABLE.items()):
 
 RUSSIAN_ALPHABET = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 WORD_REGEX = re.compile(
-    r"(^|(?<=\s)).+?($|(?=[\s,\d])|(?=[\.\?!](\s|$)))",
+    r"(^|(?<=\s)).+?($|(?=[\s,\d-])|(?=[\.\?!](\s|$)))",
     flags=re.MULTILINE,
 )
 
