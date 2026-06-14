@@ -22,6 +22,18 @@ class EspeakWorker:
         self.input_queue = input_queue
         self.output_queue = output_queue
         self._task = None
+        rate_rescaler = (
+            rate_boost_espeak_rate_rescaler
+            if config.espeak.rate_boost
+            else default_espeak_rate_rescaler
+        )
+        self._rate = str(rate_rescaler(config.espeak.rate))
+        self._voice = (
+            "ru-cl"
+            if config.espeak.variant is None
+            else "ru-cl+" + config.espeak.variant
+        )
+        self._espeak_data_path = ESPEAK_DIR.relative_to(Path.cwd())
 
     async def start(self):
         if self._task is not None:
@@ -37,32 +49,20 @@ class EspeakWorker:
     async def run(self):
         while item := await self.input_queue.get():
             id, text = item
-            wav = await self.convert_text(text)
-            await self.output_queue.put((id, wav))
+            mp3_blob = await self.convert_text(text)
+            await self.output_queue.put((id, mp3_blob))
 
     async def convert_text(self, text):
-        rate_rescaler = (
-            rate_boost_espeak_rate_rescaler
-            if config.espeak.rate_boost
-            else default_espeak_rate_rescaler
-        )
-        rate = rate_rescaler(config.espeak.rate)
-        voice = (
-            "ru-cl"
-            if config.espeak.variant is None
-            else "ru-cl+" + config.espeak.variant
-        )
-        espeak_data_path = ESPEAK_DIR.relative_to(Path.cwd())
         espeak = await asyncio.create_subprocess_exec(
             ESPEAK_DIR / "espeak-ng.exe",
-            f"--path={espeak_data_path}",
+            f"--path={self._espeak_data_path}",
             "--stdin",
             "-b",
             "1",
             "-v",
-            voice,
+            self._voice,
             "-s",
-            str(rate),
+            self._rate,
             "-z",
             "--stdout",
             stdin=asyncio.subprocess.PIPE,
