@@ -27,8 +27,4 @@ http_client = RequestSender(max_attempts=float("inf"), client=_create_httpx_clie
 
 
 def set_proxy(proxy):
-    if proxy is None:
-        proxies = {}
-    else:
-        proxies = {"http://": proxy, "https://": proxy}
-    http_client.client = _create_httpx_client(proxies=proxies)
+    http_client.client = _create_httpx_client(proxy=proxy)
