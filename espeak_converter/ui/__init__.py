@@ -58,6 +58,9 @@ class UI:
             options.append(
                 f"Исправление псевдотранслита: {'включено' if config.untranslit else 'выключено'}."
             )
+            options.append(
+                f"Количество фрагментов в одном файле: {config.chunks_per_file}."
+            )
             options.append("Назад.")
             answer = await choice("Настройки", options)
             match answer:
@@ -74,6 +77,8 @@ class UI:
                 case 5:
                     config.untranslit = not config.untranslit
                 case 6:
+                    await self.set_chunks_per_file()
+                case 7:
                     config.save()
                     return
 
@@ -166,3 +171,17 @@ class UI:
                     selected_variant = None
                 config.espeak.variant = selected_variant
                 return
+
+    async def set_chunks_per_file(self):
+        while True:
+            try:
+                answer = int(
+                    await ainput("Введите количество фрагментов в одном файле: ")
+                )
+            except ValueError:
+                continue
+            if not 0 <= answer:
+                print("Значение должно быть не меньше нуля")
+                continue
+            break
+        config.chunks_per_file = answer

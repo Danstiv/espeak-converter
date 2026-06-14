@@ -17,6 +17,7 @@ class ConfigModel(BaseModel):
     proxy: str | None = None
     espeak: EspeakModel = EspeakModel()
     untranslit: bool = False
+    chunks_per_file: int = 0
 
 
 class Config:
