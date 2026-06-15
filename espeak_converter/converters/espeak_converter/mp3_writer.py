@@ -25,6 +25,7 @@ class DirectoryMp3Writer:
 
     def open(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.output_dir = self.output_dir.resolve()
         self.open_next_file()
 
     def open_next_file(self):
